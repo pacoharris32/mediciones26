@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="México, Gobierno Federal, SEMARNAT, Comisión Nacional del Agua, CONAGUA, Subdirección General Técnica, Gerencia de Aguas Subterráneas, Subgerencia de Información Geográfica del Agua, Aguas Subterráneas">
+	<meta name="description" content="Aplicación de Consulta de Mediciones Piezométricas. México, Gobierno Federal, Comisión Nacional del Agua, CONAGUA, Subdirección General Técnica, Gerencia de Aguas Subterráneas, Subgerencia de Información Geográfica del Agua">
+    <meta name="Proyecto" content="Comisión Nacional del Agua, CONAGUA, Subdirección General Técnica, Gerencia de Aguas Subterraneas, Subgerencia de Información Geográfica del Agua">
+    <link href="https://sigagis.conagua.gob.mx/t_estudios24/img/favicon.ico" rel="shortcut icon">
+    <title>Mediciones Piezométricas</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
+     <!-- Inicia la sección del encabezado del CDN de gob.mx -->
+     <link href="https://framework-gb.cdn.gob.mx/qa/assets/styles/main.css" rel="stylesheet">
+     <!-- Termina la sección de encabezado del CDN de gob.mx -  -->
+    
+    <style>
+        body {
+            overflow-x: hidden;
+            padding-top: 130px; /* Ajuste para evitar que el contenido se oculte bajo las dos barras de navegación */
+        }
+        
+        #map {
+            height: 600px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 10px;
+            border-width: 2px;
+            border-color: #000;
+        }
+        .leaflet-tooltip {
+            background: white;
+            border: 1px solid black;
+            padding: 2px;
+        }
+        .align-right {
+            text-align: right;
+        }
+        
+        td, th { 
+            text-align: center; 
+        }
+        
+        .dt-body-right {
+            text-align: right;
+        }
+        
+        /* --- ESTILOS DE LA BARRA DE NAVEGACIÓN --- */
+        .sub-navbar {
+            background: #13322B;
+            top: 18px; /* Ajuste para colocar debajo del header de gob.mx */
+            width: 100%;
+            z-index: 1029;
+            border: none;
+        }
+
+        @media (max-width: 768px) {
+            .sub-navbar {
+                top: 50px; /* Ajuste responsivo para pantallas móviles */
+            }
+        }
+        
+        .custom-tooltip {
+            background-color: royalblue;
+            color: whitesmoke;
+            border-radius: 15px;
+            padding: 2px 5px;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .pozo-tooltip {
+            position: absolute;
+            padding: 2px;
+            margin: 2px;
+            border-radius: 10px;
+            background-color: rgba(16, 49, 43, 0.5);
+            border: 1px solid #000;
+            color: white;
+            font-size: x-small;
+            white-space: nowrap;
+            user-select: none;
+            pointer-events: none;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+            top: 19px; 
+        }
+
+        /* Control básico de z-index */
+        .leaflet-overlay-pane {
+            z-index: 400 !important;
+        }
+        
+        .leaflet-marker-pane {
+            z-index: 600 !important;
+        }
+        
+        .leaflet-shadow-pane {
+            z-index: 250 !important;
+        }
+
+        .container {
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        
+        #data-table {
+            width: 100% !important;
+        }
+
+        .radar-divicon {
+            background: transparent;
+            border: none;
+        }
+
+        .radar-pulse-icon {
+            position: relative;
+            width: 22px;
+            height: 22px;
+        }
+
+        .radar-pulse-icon .radar-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            margin: -5px 0 0 -5px;
+            background-color: #611232;
+            border: 2px solid #FFFFFF;
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+            z-index: 2;
+        }
+
+        .radar-pulse-icon .radar-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            margin: -5px 0 0 -5px;
+            border-radius: 50%;
+            background-color: rgba(165, 127, 44, 0.55);
+            animation: radar-pulse-anim 1.6s ease-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes radar-pulse-anim {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(4.5);
+                opacity: 0;
+            }
+        }
+
+        .sub-navbar .brand-two-line {
+            display: flex;
+            align-items: center;
+            height: auto;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .brand-two-line .brand-logo {
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .brand-two-line .brand-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            line-height: 1.25;
+            white-space: normal;
+        }
+
+        .brand-two-line .brand-line1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .brand-two-line .brand-line2 {
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        /* --- TARJETA DE ESTADO / ACUÍFERO SELECCIONADO --- */
+        .info-cards-container {
+            display: flex;
+            margin: 15px 0;
+        }
+
+        .info-card {
+            flex: 1 1 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 8px 24px;
+            background-color: #611232;
+            color: #FFFFFF;
+            border-radius: 10px;
+            border-left: 5px solid #a57f2c;
+            padding: 12px 18px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .info-card:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+        }
+
+        .info-card-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .info-card-divider {
+            width: 1px;
+            align-self: stretch;
+            background-color: rgba(255, 255, 255, 0.35);
+        }
+
+        @media (max-width: 768px) {
+            .info-card {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .info-card-divider {
+                width: 100%;
+                height: 1px;
+            }
+        }
+
+        .info-card-label {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .info-card-value {
+            font-weight: 400;
+            word-break: break-word;
+        }
+
+        /* --- BARRA DE FILTROS SUPERIOR (Estado / Acuífero / Años) --- */
+        .filters-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 20px;
+        }
+
+        /* --- FILTRO DE AÑOS (barra deslizante doble) --- */
+        .year-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 0 1 200px;
+            min-width: 170px;
+            margin-left: auto; /* lo empuja a la derecha del todo en pantallas anchas */
+        }
+
+        .year-range-slider {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .year-range-badge {
+            background-color: #611232;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 3px 7px;
+            border-radius: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .year-range-track-wrapper {
+            position: relative;
+            flex: 1 1 auto;
+            height: 24px;
+            min-width: 60px;
+        }
+
+        .year-range-track {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 4px;
+            background-color: #d8d8d8;
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .year-range-fill {
+            position: absolute;
+            top: 50%;
+            height: 4px;
+            background-color: #611232;
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .year-range-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: transparent;
+            pointer-events: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .year-range-input::-webkit-slider-runnable-track {
+            background: transparent;
+            height: 100%;
+        }
+
+        .year-range-input::-webkit-slider-thumb {
+            pointer-events: auto;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            margin-top: 4.5px;
+            border-radius: 50%;
+            background-color: #611232;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+        }
+
+        .year-range-input::-moz-range-track {
+            background: transparent;
+            height: 100%;
+            border: none;
+        }
+
+        .year-range-input::-moz-range-thumb {
+            pointer-events: auto;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #611232;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 
+      =========================================
+      RESUMEN DE CAMBIOS (Agosto 2026):
+      - Se eliminaron las etiquetas <br> antes de la barra de navegación que generaban espacio muerto.
+      - Se agregó la clase CSS .sub-navbar asignando top: 65px para evitar encimado con el header institucional.
+      - Se añadió media query para móviles (top: 50px) para la barra de navegación.
+      - Se modificó la regla ".body" a "body" y se añadió padding-top: 130px para compensar la altura de ambos headers.
+      - Se corrigió un error de sintaxis en el border-radius de #map (10p a 10px).
+      =========================================
+    -->
+    
+    <nav class="navbar navbar-inverse sub-navbar navbar-fixed-top">
+        <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#subenlaces">
+            <span class="sr-only">Interruptor de Navegación</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+             
+            <a class="navbar-brand brand-two-line" href="https://sigagis.conagua.gob.mx/gas1" target= "_blank"><img src="./images/conagua_6.png" height="40" width="40" class="brand-logo" />
+                <span class="brand-text">
+                    <span class="brand-line1">Subdirección General Técnica</span>
+                    <span class="brand-line2">Gerencia de Aguas Subterráneas|Consulta de Mediciones Piezométricas</span>
+                </span></a>
+    
+        </div>
+        <div class="collapse navbar-collapse" id="subenlaces">
+            <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Información<span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#" data-toggle="modal" data-target="#bienvenidaModal">Acerca de</a></li>
+                    <li><a href="./metadatos/METADATOS_MEDICIONES_PIEZOMETRICAS_2026.pdf" target="_blank">Metadatos</a></li>
+                </ul>
+            </li>
+            </ul>
+        </div>
+        </div>
+    </nav>        
+    
+    <br>
+    
+    <div class="container">
+        <div class="btn btn btn-sm filters-toolbar">
+            <label for="estados">Selecciona un Estado:</label>
+            <select id="estados" class="btn btn-primary btn-sm"></select>
+            <label for="acuiferos">Selecciona un Acuífero:</label>
+            <select id="acuiferos" class="btn btn-default btn-sm"></select>
+
+            <div class="year-filter-group">
+                <label>Filtrar por Año:</label>
+                <div class="year-range-slider">
+                    <span class="year-range-badge" id="year-start-badge">1996</span>
+                    <div class="year-range-track-wrapper">
+                        <div class="year-range-track"></div>
+                        <div class="year-range-fill" id="year-range-fill"></div>
+                        <input type="range" id="year-slider-min" class="year-range-input" min="1996" max="2026" value="1996" step="1">
+                        <input type="range" id="year-slider-max" class="year-range-input" min="1996" max="2026" value="2026" step="1">
+                    </div>
+                    <span class="year-range-badge" id="year-end-badge">2026</span>
+                </div>
+            </div>
+        </div>
+        <div id="map"></div>
+        <br>
+
+        <div class="info-cards-container">
+            <div class="info-card">
+                <div class="info-card-row">
+                    <span class="info-card-label">Estado:</span>
+                    <span class="info-card-value" id="estado-card-value">Todos los Estados</span>
+                </div>
+                <div class="info-card-divider"></div>
+                <div class="info-card-row">
+                    <span class="info-card-label">Acuífero:</span>
+                    <span class="info-card-value" id="acuifero-card-value">Todos los Acuíferos</span>
+                </div>
+                <div class="info-card-divider"></div>
+                <div class="info-card-row">
+                    <span class="info-card-label">Total de pozos:</span>
+                    <span class="info-card-value" id="total-pozos-card-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table id="data-table" class="table table-striped table-bordered table-hover table-small">
+                <thead class="thead-dark">
+                    <tr>
+                        <th class="thead-dark">Pozo</th>
+                        <th>Estado</th>
+                        <th>Acuífero</th>
+                        <th>Elev.Terr</th>
+                        <th>Latitud</th>
+                        <th>Longitud</th>
+                        <th>1996</th>
+                        <th>1997</th>
+                        <th>1998</th>
+                        <th>1999</th>
+                        <th>2000</th>
+                        <th>2001</th>
+                        <th>2002</th>
+                        <th>2003</th>
+                        <th>2004</th>
+                        <th>2005</th>
+                        <th>2006</th>
+                        <th>2007</th>
+                        <th>2008</th>
+                        <th>2009</th>
+                        <th>2010</th>
+                        <th>2011</th>
+                        <th>2012</th>
+                        <th>2013</th>
+                        <th>2014</th>
+                        <th>2015</th>
+                        <th>2016</th>
+                        <th>2017</th>
+                        <th>2018</th>
+                        <th>2019</th>
+                        <th>2020</th>
+                        <th>2021</th>
+                        <th>2022</th>
+                        <th>2023</th>
+                        <th>2024</th>
+                        <th>2025</th>
+                        <th>2026</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div id="loading-mask" style="display: none;">Cargando...</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+    
+    <script src="assets/js/app.js"></script>
+    <script src="https://framework-gb.cdn.gob.mx/qa/gobmx.js"></script>
+    
+    <script type="text/javascript">
+    var sc_project=13131210; 
+    var sc_invisible=1; 
+    var sc_security="c491f91d"; 
+    </script>
+    <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
+    <noscript><div class="statcounter"><a title="Web Analytics" href="https://statcounter.com/" target="_blank"><img class="statcounter" src="https://c.statcounter.com/13131210/0/c491f91d/1/" alt="Web Analytics" referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+</body>
+<div class="modal fade" id="bienvenidaModal" tabindex="-1" role="dialog" aria-labelledby="bienvenidaModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="bienvenidaModalLabel">Geovisor de Mediciones Piezométricas, 2026</h4>
+        </div>
+        <div class="modal-body">
+          <center><img src="https://sigagis.conagua.gob.mx/img/L140x38.jpg" width="200px" height="80px"></a></center>
+          <center><h4><p>Subdirección General Técnica</p></h4></center>
+          <center><br><h5><p>Gerencia de Aguas Subterráneas</p></h5></center>
+          <center><br><p>GeoVisor de Consulta de Mediciones Piezométricas</p> 
+          <p>Se muestra la ubicación geográfica y los datos de las <b>Mediciones Piezométricas para Aguas Subterráneas.</b></p>
+          <br><p>Versión 5.6, 2026</p></center>
+          <center><p>Actualizado con datos a junio de 2026</p></center>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</html>

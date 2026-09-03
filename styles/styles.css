@@ -1,0 +1,60 @@
+html, body {
+height: 100%;
+margin: 0;
+}
+.leaflet-container {
+/*height: auto;*/
+width: auto;
+/*max-width: 100%;
+max-height: 100%; */
+}
+/* Estilo para el widget Search */
+.leaflet-control-search-form input {
+    font-size: 14px!important;
+}
+/* Estilo personalizado para las etiquetas de acuíferos */
+.acuifero-tooltip {
+    font-size: 14px; /* Tamaño de fuente de 14 puntos */
+    background: #C2B493;
+    fill-opacity: 0.6;
+}
+
+.popup-acuifero {
+ /*   font-size: 14px; /* Tamaño de fuente deseado */ 
+    font: 14px/16px Montserrat, Arial, Helvetica, sans-serif;
+
+}
+
+
+
+/* Estilo para el widget Control Layers */
+.leaflet-control-layers label {
+    font-size: 14px!important;
+}
+
+	
+#map { width: auto; height: auto; }
+
+.info {
+padding: 6px 8px;
+font: 14px/16px Montserrat, Arial, Helvetica, sans-serif;
+background: #C2B493; 
+background: rgba(255,255,255,0.8);
+box-shadow: 0 0 15px rgba(0,0,0,1.0);
+border-radius: 5px;
+} 
+
+.info h4 { 
+    margin: 0 0 5px;
+    color: #5E0404;
+    font: 16px/18px Arial, Helvetica, sans-serif;
+ }
+
+ .acuifero-label {
+    display: none;
+    background-color: transparent;
+    border: none;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+
+}
+
