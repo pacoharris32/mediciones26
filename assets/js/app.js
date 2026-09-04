@@ -15,10 +15,24 @@ var geojson;
 // pasar por la animación extra de "desenredar" el clúster (spiderfy).
 var markers = L.markerClusterGroup({ disableClusteringAtZoom: 15 }); // Grupo de clústeres
 
-var CyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
-    maxZoom: 20,
-    attribution: '<a href="https://github.com/cyclosm/cyclosm-cartocss-style/releases" title="CyclOSM - Open Bicycle render">CyclOSM</a> | Map data: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |  © <a href="https://sigagis.conagua.gob.mx/gas1">CONAGUA|SGT|GAS|SIGA</a>'
-});
+var OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+     maxZoom: 20,
+     attribution: '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map data: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |  © <a href="https://sigagis.conagua.gob.mx/gas1">CONAGUA|SGT|GAS|SIGA</a>'
+ });
+
+// Agregar un par de mapas base al control de capas
+// var baseMaps = {
+//     "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+//         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+//     }),
+//     "CyclOSM": L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+//         maxZoom: 12,
+//         attribution: '<a href="https://github.com/cyclosm/cyclosm-cartocss-style/releases" title="CyclOSM - Open Bicycle render">CyclOSM</a> | Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+//     })
+// };
+
+// Agregar los mapas base al mapa
+// baseMaps["CyclOSM"].addTo(map);
 
 var acuiferosLayer = L.geoJson(null, {
     onEachFeature: function(feature, layer) {
@@ -187,7 +201,7 @@ function initializeMap() {
         maxZoom: 16,
         maxBounds: mexicoBounds,
         maxBoundsViscosity: 1.0,
-        layers: [CyclOSM, acuiferosLayer, markers] // markers ÚLTIMO (adelante)
+        layers: [OpenStreetMap, acuiferosLayer, markers] // markers ÚLTIMO (adelante)
     });
 
     $.getJSON("assets/geojson/pozos_06_2026_.geojson", function(data) {
